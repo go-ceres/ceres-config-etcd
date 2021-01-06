@@ -89,20 +89,15 @@ func (e *etcdSource) getUnmarshal() string {
 }
 
 // 创建一个资源
-func NewSource(opts ...Option) CeresConfig.Source {
-	conf := defaultConfig()
-	for _, opt := range opts {
-		opt(conf)
+func NewSource(c *Config) CeresConfig.Source {
+	// 处理前缀
+	if c.TrimPrefix == "" {
+		c.TrimPrefix = c.Prefix
 	}
-	// 删除掉key前缀
-	if conf.TrimPrefix == "" {
-		conf.TrimPrefix = conf.Prefix
-	}
-
-	cli, err := clientv3.New(*conf.Config)
+	cli, err := clientv3.New(*c.Config)
 	return &etcdSource{
 		client: cli,
-		config: conf,
+		config: c,
 		err:    err,
 	}
 }

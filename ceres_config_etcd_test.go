@@ -8,7 +8,7 @@ import (
 
 func TestEtcdSource_Read(t *testing.T) {
 	etcd := NewSource(
-		Addr("203.195.200.40:12379", "203.195.200.40:22379", "203.195.200.40:32379"),
+		DefaultConfig().WithEndpoints("203.195.200.40:12379", "203.195.200.40:22379", "203.195.200.40:32379"),
 	)
 	ds, err := etcd.Read()
 	etcd.Watch()

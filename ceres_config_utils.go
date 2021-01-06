@@ -42,13 +42,13 @@ type Unmarshal func(data []byte, v interface{}) error
 func makeMapData(kv []*mvccpb.KeyValue, fn Unmarshal, trimPrefix string) map[string]interface{} {
 	data := make(map[string]interface{})
 	for _, value := range kv {
-		data = modifyMapData("put", trimPrefix, data, value, fn)
+		data = modifyMapData(trimPrefix, data, value, fn)
 	}
 	return data
 }
 
 // modifyMapData 调整数据
-func modifyMapData(op, trimPrefix string, data map[string]interface{}, kv *mvccpb.KeyValue, fn Unmarshal) map[string]interface{} {
+func modifyMapData(trimPrefix string, data map[string]interface{}, kv *mvccpb.KeyValue, fn Unmarshal) map[string]interface{} {
 	// 删除前缀，例如：/ceres/config/etcd/default,操作后的为：etcd/default
 	key := strings.TrimPrefix(strings.TrimPrefix(string(kv.Key), trimPrefix), "/")
 	// 分割为["etcd","default"]
@@ -58,14 +58,11 @@ func modifyMapData(op, trimPrefix string, data map[string]interface{}, kv *mvccp
 	_ = fn(kv.Value, &value)
 
 	if len(keys) > 0 && len(keys) == 1 {
-		switch op {
-		case "delete":
+		v, ok := value.(map[string]interface{})
+		if ok {
+			data = v
+		} else {
 			data = make(map[string]interface{})
-		default:
-			v, ok := value.(map[string]interface{})
-			if ok {
-				data = v
-			}
 		}
 		return data
 	}
@@ -80,12 +77,7 @@ func modifyMapData(op, trimPrefix string, data map[string]interface{}, kv *mvccp
 		}
 		// 如果是最后一个key，则设置数据
 		if len(keys)-1 == i {
-			switch op {
-			case "delete":
-				delete(tempData, k)
-			default:
-				tempData[k] = value
-			}
+			tempData[k] = value
 		} else {
 			tempData = kData
 		}
